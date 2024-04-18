@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 const socket = io("http://localhost:8000"); // Use your backend server URL
 const LandPage = () => {
   const [msg, setMsg] = useState("");
+  const [receiver, setReceiver] = useState("");
   const [val, setVal] = useState("");
   const { id } = useParams();
   console.log(id);
@@ -17,7 +18,7 @@ const LandPage = () => {
 
     socket.on(id, (msg) => {
       console.log("revert msg", msg);
-      setVal(msg);
+      setVal(msg.msg);
     });
 
     // Clean up on unmount
@@ -31,10 +32,18 @@ const LandPage = () => {
         onChange={(e) => {
           setMsg(e.target.value);
         }}
+        placeholder="msg"
+      ></input>
+      <input
+        value={receiver}
+        onChange={(e) => {
+          setReceiver(e.target.value);
+        }}
+        placeholder="receiver"
       ></input>
       <button
         onClick={() => {
-          socket.emit("chatup", { userName: "u2", msg: msg });
+          socket.emit("chatup", { sender: id, receiver: receiver, msg: msg });
           console.log("send");
         }}
       >

@@ -1,28 +1,43 @@
 import "./App.css";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LandPage from "./components/LandPage";
+import Signup from "./components/Signup";
+import Login from "./components/Login";
 
 const App = () => {
-  const navigate = useNavigate();
-  const [userName, setUserName] = useState("");
-
   return (
-    <>
-      <input
-        value={userName}
-        onChange={(e) => {
-          setUserName(e.target.value);
-        }}
-      ></input>
-      <button
-        onClick={() => {
-          navigate(`/${userName}`);
-        }}
-      >
-        click
-      </button>
-    </>
+    <div className="w-screen h-screen flex justify-center items-center">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
+
+  // const navigate = useNavigate();
+  // const [userName, setUserName] = useState("");
+
+  // return (
+  //   <>
+  //     <input
+  //       value={userName}
+  //       onChange={(e) => {
+  //         setUserName(e.target.value);
+  //       }}
+  //     ></input>
+  //     <button
+  //       onClick={() => {
+  //         navigate(`/${userName}`);
+  //       }}
+  //     >
+  //       click
+  //     </button>
+  //   </>
+  // );
 };
 
 export default App;
