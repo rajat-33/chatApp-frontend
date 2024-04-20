@@ -2,9 +2,9 @@ import "./App.css";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LandPage from "./components/LandPage";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
+import Home from "./components/Home";
 
 const App = () => {
   return (
@@ -13,6 +13,7 @@ const App = () => {
         <Routes>
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/chat/:id" element={<Home />} />
         </Routes>
       </BrowserRouter>
     </div>
