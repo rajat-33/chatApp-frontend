@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { MdArrowForwardIos } from "react-icons/md";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { MdArrowForwardIos } from "react-icons/md";
 
 const Signup = () => {
   const [name, setName] = useState("");

@@ -3,6 +3,8 @@ import { IoSearch } from "react-icons/io5";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import io from "socket.io-client";
+import { FaUser } from "react-icons/fa";
+import { IoIosNotifications } from "react-icons/io";
 
 const socket = io("http://localhost:8000"); // Use your backend server URL
 
@@ -10,6 +12,7 @@ const Home = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [activeUsers, setActiveUsers] = useState(0);
   const [timer, setTimer] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -41,12 +44,25 @@ const Home = () => {
       });
   };
 
+  const handlePendingRequests = async () => {
+    await axios
+      .get(`http://localhost:8000/request/getRequest/${id}`)
+      .then((res) => {
+        setPendingRequests(res.data.requestResults);
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   useEffect(() => {
     if (!localStorage.getItem("authToken")) {
       navigate(`/login`);
     }
     handleGetAllUsers(document.getElementById("searchUsersInputElement").value);
     handleGetActiveUsers();
+    handlePendingRequests();
 
     socket.on("connect", () => {
       console.log("Connected to server");
@@ -60,6 +76,8 @@ const Home = () => {
   useEffect(() => {
     handleGetAllUsers(document.getElementById("searchUsersInputElement").value);
     handleGetActiveUsers();
+    handlePendingRequests();
+    console.log(1);
     setInterval(() => {
       setTimer((timer + 1) % 2);
     }, 5000);
@@ -67,23 +85,33 @@ const Home = () => {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <div className="flex h-[calc(12%)] justify-end items-center border">
-        <div className="flex h-full w-3/4 border justify-end items-center">
-          <div className="w-3/5 border text-center text-[2rem] font-semibold">
+      <div className="flex h-[calc(10%)] justify-end items-center border-y-[0.2rem] border-[#C6FFBB]">
+        <div className="flex h-full w-3/4 justify-end items-center">
+          <div className="w-3/5 text-center text-[2rem] font-semibold">
             &lt; ChatApp /&gt;
           </div>
-          <div className="w-2/5 border flex justify-around">
+          <div
+            className="w-2/5 flex justify-around"
+            title="Currently active users"
+          >
             <div className="flex justify-center items-center">
               <span className="h-4 w-4 bg-[#3CFF31] rounded-lg"></span>
               <span className="ml-2">{activeUsers}</span>
             </div>
+            <button className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2 p-1">
+              <IoIosNotifications />
+              <span className="h-full text-sm text-[#FF0000] font-semibold">
+                {pendingRequests.length}
+              </span>
+            </button>
             <button
-              className="w-12 h-12 rounded-[10rem] border"
+              className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2"
               onClick={() => {
                 navigate(`/profile/${id}`);
               }}
+              title="Profile"
             >
-              profile
+              <FaUser />
             </button>
           </div>
         </div>
@@ -111,8 +139,10 @@ const Home = () => {
                       key={ind}
                     >
                       <div className="w-1/6 h-full flex justify-center items-center">
-                        {u.isActive && (
+                        {u.isActive ? (
                           <span className="h-3 w-3 bg-[#3CFF31] rounded-lg border"></span>
+                        ) : (
+                          <span className="h-3 w-3 bg-[#FF0000] rounded-lg border"></span>
                         )}
                       </div>
                       <div className="w-1/2 text-lg text-center">{u.name}</div>
