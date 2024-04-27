@@ -58,9 +58,6 @@ const Profile = () => {
               Connections {userDetails.connections.length}
             </div>
             <div className="flex py-4 px-4 border rounded bg-[#C6FFBB] w-full text-lg">
-              Pending Requests {}
-            </div>
-            <div className="flex py-4 px-4 border rounded bg-[#C6FFBB] w-full text-lg">
               Last Visited
             </div>
             {/* <div className="flex">Change Password </div> */}
