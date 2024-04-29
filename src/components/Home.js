@@ -15,6 +15,7 @@ import { RxCross1 } from "react-icons/rx";
 
 const socket = io("http://localhost:8000"); // Use your backend server URL
 
+let setMsgToggle = 1;
 const Home = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [activeUsers, setActiveUsers] = useState(0);
@@ -153,11 +154,16 @@ const Home = () => {
     });
 
     socket.onAny((eventName, ...args) => {
-      if (eventName.endsWith(id) && eventName.startsWith("chat")) {
+      if (
+        eventName.endsWith(id) &&
+        eventName.startsWith("chat") &&
+        setMsgToggle
+      ) {
         console.log(`Received event '${eventName}' ${args[0]}`);
         // Handle the event here
-        setMessages([...messages, args[0]]);
+        setMessages((oldArray) => [...oldArray, args[0]]);
       }
+      setMsgToggle = (setMsgToggle + 1) % 2;
     });
 
     socket.on("noOfActiveUsers", (val) => {
@@ -378,9 +384,13 @@ const Home = () => {
                 </span>
               </div>
               <div className="flex flex-col h-[calc(90%)] border">
-                <div className="flex flex-col h-[calc(85%)]">
+                <div className="flex flex-col h-[30rem] py-8 px-4 overflow-y-auto">
                   {messages.map((val, ind) => {
-                    return <span className="w-full">{val}</span>;
+                    return (
+                      <span className="w-5/6 py-2 px-4 bg-[#C6FFBB] my-4">
+                        {val}
+                      </span>
+                    );
                   })}
                 </div>
                 <div className="flex h-[calc(15%)] border justify-center items-center">
@@ -396,7 +406,7 @@ const Home = () => {
                     className=" border-2 border-[#779C7D] rounded-lg  px-2 py-1"
                     onClick={() => {
                       console.log(`${newMsg}`, `chat-${id}-${lastClickOnUser}`);
-                      setMessages([...messages, newMsg]);
+                      setMessages((oldArray) => [...oldArray, newMsg]);
                       socket.emit(`chat-${id}-${lastClickOnUser}`, newMsg);
                     }}
                   >
