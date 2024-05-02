@@ -13,9 +13,8 @@ import { RxCrossCircled } from "react-icons/rx";
 import { IoIosCheckmarkCircleOutline } from "react-icons/io";
 import { RxCross1 } from "react-icons/rx";
 
-const socket = io("http://localhost:8000"); // Use your backend server URL
-
 let setMsgToggle = 1;
+const socket = io("http://localhost:8000"); // Use your backend server URL
 const Home = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [activeUsers, setActiveUsers] = useState(0);
@@ -25,7 +24,7 @@ const Home = () => {
   const [insideScreenElement, setInsideScreenElement] = useState("");
   const [lastClickOnUser, setLastClickOnUser] = useState("");
   const [newMsg, setNewMsg] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState({});
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -61,7 +60,7 @@ const Home = () => {
     await axios
       .get(`http://localhost:8000/auth/getUsers/${id}`)
       .then((res) => {
-        console.log("here", res.data.getUserResult.connections);
+        // console.log("here", res.data.getUserResult.connections);
         setConnections(res.data.getUserResult.connections);
       })
       .catch((err) => {
@@ -160,16 +159,32 @@ const Home = () => {
         setMsgToggle
       ) {
         console.log(`Received event '${eventName}' ${args[0]}`);
-        // Handle the event here
-        setMessages((oldArray) => [...oldArray, args[0]]);
+        console.log(args[0]);
+        console.log(messages);
+        setMessages((prevMessages) => {
+          if (prevMessages.hasOwnProperty(eventName)) {
+            return {
+              ...prevMessages,
+              [eventName]: [
+                ...prevMessages[eventName],
+                { msg: args[0], isLeftSide: true, timestamp: Date.now() },
+              ],
+            };
+          } else {
+            return {
+              ...prevMessages,
+              [eventName]: [
+                { msg: args[0], isLeftSide: true, timestamp: Date.now() },
+              ],
+            };
+          }
+        });
+        console.log("messages", messages);
       }
+      console.log(setMsgToggle);
       setMsgToggle = (setMsgToggle + 1) % 2;
     });
-
-    socket.on("noOfActiveUsers", (val) => {
-      setActiveUsers(val);
-    });
-  }, []);
+  }, [timer]);
 
   useEffect(() => {
     handleGetAllUsers(document.getElementById("searchUsersInputElement").value);
@@ -180,7 +195,13 @@ const Home = () => {
     setInterval(() => {
       setTimer((timer + 1) % 2);
     }, 10000);
-  }, [timer]);
+
+    return () => {
+      // socket.off("message");
+      socket.disconnect();
+      clearInterval();
+    };
+  }, []);
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -385,13 +406,32 @@ const Home = () => {
               </div>
               <div className="flex flex-col h-[calc(90%)] border">
                 <div className="flex flex-col h-[30rem] py-8 px-4 overflow-y-auto">
-                  {messages.map((val, ind) => {
-                    return (
-                      <span className="w-5/6 py-2 px-4 bg-[#C6FFBB] my-4">
-                        {val}
-                      </span>
-                    );
-                  })}
+                  {messages.hasOwnProperty(`chat-${lastClickOnUser}-${id}`) &&
+                    messages[`chat-${lastClickOnUser}-${id}`].map(
+                      (val, ind) => {
+                        if (val.isLeftSide)
+                          return (
+                            <div className="flex w-full my-4">
+                              {lastClickOnUser}
+                              <span className="w-5/6 py-2 px-4 bg-[#C6FFBB]  rounded-r-xl">
+                                {val.msg}
+                              </span>
+                              {val.timestamp}
+                            </div>
+                          );
+                        else {
+                          return (
+                            <div className="flex w-full justify-end my-4">
+                              you
+                              <span className="w-5/6 py-2 px-4 bg-[#C6FFBB] rounded-l-xl">
+                                {val.msg}
+                              </span>
+                              {val.timestamp}
+                            </div>
+                          );
+                        }
+                      }
+                    )}
                 </div>
                 <div className="flex h-[calc(15%)] border justify-center items-center">
                   <input
@@ -406,8 +446,37 @@ const Home = () => {
                     className=" border-2 border-[#779C7D] rounded-lg  px-2 py-1"
                     onClick={() => {
                       console.log(`${newMsg}`, `chat-${id}-${lastClickOnUser}`);
-                      setMessages((oldArray) => [...oldArray, newMsg]);
-                      socket.emit(`chat-${id}-${lastClickOnUser}`, newMsg);
+                      const eventName = `chat-${id}-${lastClickOnUser}`;
+                      const storeName = `chat-${lastClickOnUser}-${id}`;
+                      setMessages((prevMessages) => {
+                        if (prevMessages.hasOwnProperty(storeName)) {
+                          return {
+                            ...prevMessages,
+                            [storeName]: [
+                              ...prevMessages[storeName],
+                              {
+                                msg: newMsg,
+                                isLeftSide: false,
+                                timestamp: Date.now(),
+                              },
+                            ],
+                          };
+                        } else {
+                          return {
+                            ...prevMessages,
+                            [storeName]: [
+                              {
+                                msg: newMsg,
+                                isLeftSide: false,
+                                timestamp: Date.now(),
+                              },
+                            ],
+                          };
+                        }
+                      });
+                      console.log("messages", messages);
+                      socket.emit(eventName, newMsg);
+                      setNewMsg("");
                     }}
                   >
                     send
