@@ -12,6 +12,7 @@ import { FaPowerOff } from "react-icons/fa6";
 import { RxCrossCircled } from "react-icons/rx";
 import { IoIosCheckmarkCircleOutline } from "react-icons/io";
 import { RxCross1 } from "react-icons/rx";
+import Modal from "./Modal";
 
 let setMsgToggle = 1;
 const socket = io("http://localhost:8000"); // Use your backend server URL
@@ -25,6 +26,9 @@ const Home = () => {
   const [lastClickOnUser, setLastClickOnUser] = useState("");
   const [newMsg, setNewMsg] = useState("");
   const [messages, setMessages] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMsg, setModalMsg] = useState("");
+  const [isModalMsgPositive, setIsModalMsgPositive] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -35,9 +39,7 @@ const Home = () => {
           "auth-token": localStorage.getItem("authToken"),
         },
       })
-      .then((res) => {
-        console.log("huisdchjbeschjbesd", res.data.getUserResult);
-      })
+      .then((res) => {})
       .catch((err) => {
         console.log(err.response);
         navigate(`/login`);
@@ -115,9 +117,15 @@ const Home = () => {
       })
       .then((res) => {
         console.log(res.data);
+        setModalMsg("Request Sent!");
+        setIsModalOpen(true);
+        setIsModalMsgPositive(true);
       })
       .catch((err) => {
-        console.log(err);
+        console.log(err.response.data.message);
+        setModalMsg(err.response.data.message);
+        setIsModalOpen(true);
+        setIsModalMsgPositive(false);
       });
   };
 
@@ -126,9 +134,15 @@ const Home = () => {
       .delete(`http://localhost:8000/request/deleteRequest/${userName}/${id}`)
       .then((res) => {
         console.log(res.data);
+        setModalMsg("Request Deleted!");
+        setIsModalOpen(true);
+        setIsModalMsgPositive(true);
       })
       .catch((err) => {
         console.log(err);
+        setModalMsg(err.response.data.message);
+        setIsModalOpen(true);
+        setIsModalMsgPositive(false);
       });
   };
 
@@ -137,9 +151,15 @@ const Home = () => {
       .patch(`http://localhost:8000/request/acceptRequest/${userName}/${id}`)
       .then((res) => {
         console.log(res.data);
+        setModalMsg("Request Accepted!");
+        setIsModalOpen(true);
+        setIsModalMsgPositive(true);
       })
       .catch((err) => {
         console.log(err);
+        setModalMsg(err.response.data.message);
+        setIsModalOpen(true);
+        setIsModalMsgPositive(false);
       });
   };
 
@@ -151,6 +171,9 @@ const Home = () => {
       })
       .catch((err) => {
         console.log(err.response.data.msg);
+        setModalMsg("Can't Logout");
+        setIsModalOpen(true);
+        setIsModalMsgPositive(false);
       });
   };
 
@@ -220,315 +243,330 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="flex h-[calc(10%)] justify-end items-center border-y-[0.2rem] border-[#C6FFBB]">
-        <div className="flex h-full w-3/4 justify-end items-center">
-          <div className="w-3/5 text-center text-[2rem] font-semibold">
-            &lt; ChatApp /&gt;
-          </div>
-          <div className="w-2/5 flex justify-around">
-            <div
-              className="flex justify-center items-center"
-              title="Currently active users"
-            >
-              <span className="h-4 w-4 bg-[#3CFF31] rounded-lg"></span>
-              <span className="ml-2">{activeUsers}</span>
+    <div className="h-full w-full">
+      {isModalOpen && (
+        <Modal
+          setIsModalOpen={setIsModalOpen}
+          msg={modalMsg}
+          isModalMsgPositive={isModalMsgPositive}
+        />
+      )}
+      <div
+        className={
+          isModalOpen
+            ? "opacity-40 disabled h-full w-full flex flex-col"
+            : "h-full w-full flex flex-col"
+        }
+      >
+        <div className="flex h-[calc(10%)] justify-end items-center border-y-[0.2rem] border-[#C6FFBB]">
+          <div className="flex h-full w-3/4 justify-end items-center">
+            <div className="w-3/5 text-center text-[2rem] font-semibold">
+              &lt; ChatApp /&gt;
             </div>
-            <button
-              className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2 p-1"
-              title="Friends"
-              onClick={() => {
-                setInsideScreenElement("viewFriends");
-              }}
-            >
-              <FaUserFriends />
-              <span className="h-full text-sm text-[#FF0000] font-semibold">
-                {connections.length}
-              </span>
-            </button>
-            <button
-              className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2 p-1"
-              title="Notifications"
-              onClick={() => {
-                setInsideScreenElement("viewNotifications");
-              }}
-            >
-              <IoIosNotifications />
-              <span className="h-full text-sm text-[#FF0000] font-semibold">
-                {pendingRequests.length}
-              </span>
-            </button>
-            <button
-              className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2"
-              onClick={() => {
-                handleLogOutUser();
-              }}
-              title="Logout"
-            >
-              <FaPowerOff />
-            </button>
+            <div className="w-2/5 flex justify-around">
+              <div
+                className="flex justify-center items-center"
+                title="Currently active users"
+              >
+                <span className="h-4 w-4 bg-[#3CFF31] rounded-lg"></span>
+                <span className="ml-2">{activeUsers}</span>
+              </div>
+              <button
+                className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2 p-1"
+                title="Friends"
+                onClick={() => {
+                  setInsideScreenElement("viewFriends");
+                }}
+              >
+                <FaUserFriends />
+                <span className="h-full text-sm text-[#FF0000] font-semibold">
+                  {connections.length}
+                </span>
+              </button>
+              <button
+                className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2 p-1"
+                title="Notifications"
+                onClick={() => {
+                  setInsideScreenElement("viewNotifications");
+                }}
+              >
+                <IoIosNotifications />
+                <span className="h-full text-sm text-[#FF0000] font-semibold">
+                  {pendingRequests.length}
+                </span>
+              </button>
+              <button
+                className="w-12 h-12 rounded-[10rem] border flex justify-center items-center hover:bg-[#3CFF31] bg-[#9FFF8B] text-[1.75rem] border-2"
+                onClick={() => {
+                  handleLogOutUser();
+                }}
+                title="Logout"
+              >
+                <FaPowerOff />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex h-full justify-center items-center border">
-        <div className="flex h-full flex-col w-1/6 border justify-center items-center py-4">
-          <div className="w-3/4 flex justify-center items-center border rounded-lg px-2 mb-4">
-            <IoSearch />
-            <input
-              className="w-[10rem] px-2 py-1"
-              placeholder="Search users"
-              onChange={(e) => {
-                handleGetAllUsers(e.target.value);
-              }}
-              id="searchUsersInputElement"
-            ></input>
-          </div>
-          <div className="h-[35rem] border flex flex-col w-full">
-            <div className="overflow-y-scroll scrollable-container">
-              {allUsers.map((u, ind) => {
-                if (u.userName !== id) {
-                  return (
-                    <div
-                      className="flex border h-[4rem] items-center"
-                      key={ind}
-                      onClick={() => {
-                        handleClickOnUser(u.userName, u.isActive);
-                      }}
-                    >
-                      {connections && (
-                        <div className="w-1/6 h-full flex justify-center items-center">
-                          {connections.find((e) => e == u.userName) ? (
-                            u.isActive ? (
-                              <span className="h-3 w-3 text-[#3CFF31]">
-                                <FaUserFriends />
-                              </span>
+        <div className="flex h-full justify-center items-center border">
+          <div className="flex h-full flex-col w-1/6 border justify-center items-center py-4">
+            <div className="w-3/4 flex justify-center items-center border rounded-lg px-2 mb-4">
+              <IoSearch />
+              <input
+                className="w-[10rem] px-2 py-1"
+                placeholder="Search users"
+                onChange={(e) => {
+                  handleGetAllUsers(e.target.value);
+                }}
+                id="searchUsersInputElement"
+              ></input>
+            </div>
+            <div className="h-[35rem] border flex flex-col w-full">
+              <div className="overflow-y-scroll scrollable-container">
+                {allUsers.map((u, ind) => {
+                  if (u.userName !== id) {
+                    return (
+                      <div
+                        className="flex border h-[4rem] items-center"
+                        key={ind}
+                        onClick={() => {
+                          handleClickOnUser(u.userName, u.isActive);
+                        }}
+                      >
+                        {connections && (
+                          <div className="w-1/6 h-full flex justify-center items-center">
+                            {connections.find((e) => e == u.userName) ? (
+                              u.isActive ? (
+                                <span className="h-3 w-3 text-[#3CFF31]">
+                                  <FaUserFriends />
+                                </span>
+                              ) : (
+                                <span className="h-3 w-3 text-[#FF0000]">
+                                  <FaUserFriends />
+                                </span>
+                              )
                             ) : (
-                              <span className="h-3 w-3 text-[#FF0000]">
-                                <FaUserFriends />
+                              <span className="h-3 w-3 text-[#00605E]">
+                                <MdPersonAddAlt1 />
                               </span>
-                            )
-                          ) : (
-                            <span
-                              className="h-3 w-3 text-[#00605E]"
-                              onClick={() => {
-                                handleMakeRequest(u.userName);
-                              }}
-                            >
-                              <MdPersonAddAlt1 />
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {/* <div className="w-1/6 h-full flex justify-center items-center">
+                            )}
+                          </div>
+                        )}
+                        {/* <div className="w-1/6 h-full flex justify-center items-center">
                         {u.isActive ? (
                           <span className="h-3 w-3 bg-[#3CFF31] rounded-lg border"></span>
                         ) : (
                           <span className="h-3 w-3 bg-[#FF0000] rounded-lg border"></span>
                         )}
                       </div> */}
-                      <div className="w-1/2 text-lg text-center">{u.name}</div>
-                      <div className="w-1/3 text-sm text-center">
-                        {u.userName}
+                        <div className="w-1/2 text-lg text-center">
+                          {u.name}
+                        </div>
+                        <div className="w-1/3 text-sm text-center">
+                          {u.userName}
+                        </div>
                       </div>
-                    </div>
-                  );
-                }
-              })}
+                    );
+                  }
+                })}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="h-full w-5/6 border-2 flex justify-end ">
-          {insideScreenElement === "viewNotifications" ? (
-            <div className="h-1/2 w-1/3 flex flex-col items-center z-10">
-              <div className="flex w-full justify-center items-center">
-                <span className="text-lg font-semibold my-2 w-full text-center">
-                  Pending Requests
-                </span>
-                <button
-                  className="flex justify-end pr-4 items-center relative z-2"
-                  onClick={() => {
-                    setInsideScreenElement("");
-                  }}
-                >
-                  <span className="border-2 border-black rounded-[4rem] p-1">
-                    <RxCross1 />
+          <div className="h-full w-5/6 border-2 flex justify-end ">
+            {insideScreenElement === "viewNotifications" ? (
+              <div className="h-1/2 w-1/3 flex flex-col items-center z-10">
+                <div className="flex w-full justify-center items-center">
+                  <span className="text-lg font-semibold my-2 w-full text-center">
+                    Pending Requests
                   </span>
-                </button>
-              </div>
-              {pendingRequests.map((ele, ind) => {
-                return (
-                  <div className="h-16 w-full flex justify-around items-center border">
-                    <button
-                      className="h-full text-[#FF0000]"
-                      onClick={() => {
-                        handleDeleteRequest(ele.sender);
-                      }}
-                    >
-                      <RxCrossCircled />
-                    </button>
-                    <div className="flex flex-col justify-center items-center">
-                      <span>{ele.timestamp}</span>
-                      <span>{ele.sender}</span>
-                    </div>
-                    <button
-                      className="text-[#3CFF31]"
-                      onClick={() => {
-                        handleAcceptRequest(ele.sender);
-                      }}
-                    >
-                      <IoIosCheckmarkCircleOutline />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : insideScreenElement === "viewFriends" ? (
-            <div className="h-1/2 w-1/4 border flex flex-col items-center z-10">
-              <div className="flex w-full justify-center items-center">
-                <span className="text-lg font-semibold my-2 w-full text-center">
-                  Friends
-                </span>
-                <button
-                  className="flex justify-end pr-4 items-center relative z-2"
-                  onClick={() => {
-                    setInsideScreenElement("");
-                  }}
-                >
-                  <span className="border-2 border-black rounded-[4rem] p-1">
-                    <RxCross1 />
-                  </span>
-                </button>
-              </div>
-              <div className="w-full flex flex-col">
-                {connections.map((ele, ind) => {
+                  <button
+                    className="flex justify-end pr-4 items-center relative z-2"
+                    onClick={() => {
+                      setInsideScreenElement("");
+                    }}
+                  >
+                    <span className="border-2 border-black rounded-[4rem] p-1">
+                      <RxCross1 />
+                    </span>
+                  </button>
+                </div>
+                {pendingRequests.map((ele, ind) => {
                   return (
-                    <div className="w-1/2 flex justify-center items-center">
-                      <span className="h-3 w-3 text-[#2B2FFF]">
-                        <FaUserFriends />
-                      </span>
-                      <span className="ml-4">{ele}</span>
+                    <div className="h-16 w-full flex justify-around items-center border">
+                      <button
+                        className="h-full text-[#FF0000]"
+                        onClick={() => {
+                          handleDeleteRequest(ele.sender);
+                        }}
+                      >
+                        <RxCrossCircled />
+                      </button>
+                      <div className="flex flex-col justify-center items-center">
+                        <span>{ele.timestamp}</span>
+                        <span>{ele.sender}</span>
+                      </div>
+                      <button
+                        className="text-[#3CFF31]"
+                        onClick={() => {
+                          handleAcceptRequest(ele.sender);
+                        }}
+                      >
+                        <IoIosCheckmarkCircleOutline />
+                      </button>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          ) : insideScreenElement === "chatView" ? (
-            <div className="w-full h-full">
-              <div className="flex h-[calc(10%)] w-1/2 items-center border p-4">
-                <span className="h-3 w-3 bg-[#3CFF31] border rounded-lg"></span>
-                <span className="text-xl font-semibold ml-4">
-                  {lastClickOnUser}
-                </span>
-              </div>
-              <div className="flex flex-col h-[calc(90%)] border">
-                <div className="flex flex-col h-[30rem] py-8 px-4 overflow-y-auto">
-                  {messages.hasOwnProperty(`chat-${lastClickOnUser}-${id}`) &&
-                    messages[`chat-${lastClickOnUser}-${id}`].map(
-                      (val, ind) => {
-                        if (val.isLeftSide)
-                          return (
-                            <div className="flex w-full my-4">
-                              {lastClickOnUser}
-                              <span className="w-5/6 py-2 px-4 bg-[#C6FFBB]  rounded-r-xl">
-                                {val.msg}
-                              </span>
-                              {val.timestamp}
-                            </div>
-                          );
-                        else {
-                          return (
-                            <div className="flex w-full justify-end my-4">
-                              you
-                              <span className="w-5/6 py-2 px-4 bg-[#C6FFBB] rounded-l-xl">
-                                {val.msg}
-                              </span>
-                              {val.timestamp}
-                            </div>
-                          );
-                        }
-                      }
-                    )}
-                </div>
-                <div className="flex h-[calc(15%)] border justify-center items-center">
-                  <input
-                    className="w-3/4 border-2 border-[#779C7D] rounded-lg h-1/2 px-2 py-1"
-                    placeholder="Type a message..."
-                    value={newMsg}
-                    onChange={(e) => {
-                      setNewMsg(e.target.value);
-                    }}
-                  ></input>
+            ) : insideScreenElement === "viewFriends" ? (
+              <div className="h-1/2 w-1/4 border flex flex-col items-center z-10">
+                <div className="flex w-full justify-center items-center">
+                  <span className="text-lg font-semibold my-2 w-full text-center">
+                    Friends
+                  </span>
                   <button
-                    className=" border-2 border-[#779C7D] rounded-lg  px-2 py-1"
+                    className="flex justify-end pr-4 items-center relative z-2"
                     onClick={() => {
-                      console.log(`${newMsg}`, `chat-${id}-${lastClickOnUser}`);
-                      const eventName = `chat-${id}-${lastClickOnUser}`;
-                      const storeName = `chat-${lastClickOnUser}-${id}`;
-                      setMessages((prevMessages) => {
-                        if (prevMessages.hasOwnProperty(storeName)) {
-                          return {
-                            ...prevMessages,
-                            [storeName]: [
-                              ...prevMessages[storeName],
-                              {
-                                msg: newMsg,
-                                isLeftSide: false,
-                                timestamp: Date.now(),
-                              },
-                            ],
-                          };
-                        } else {
-                          return {
-                            ...prevMessages,
-                            [storeName]: [
-                              {
-                                msg: newMsg,
-                                isLeftSide: false,
-                                timestamp: Date.now(),
-                              },
-                            ],
-                          };
-                        }
-                      });
-                      console.log("messages", messages);
-                      socket.emit(eventName, newMsg);
-                      setNewMsg("");
+                      setInsideScreenElement("");
                     }}
                   >
-                    send
+                    <span className="border-2 border-black rounded-[4rem] p-1">
+                      <RxCross1 />
+                    </span>
+                  </button>
+                </div>
+                <div className="w-full flex flex-col">
+                  {connections.map((ele, ind) => {
+                    return (
+                      <div className="w-1/2 flex justify-center items-center">
+                        <span className="h-3 w-3 text-[#2B2FFF]">
+                          <FaUserFriends />
+                        </span>
+                        <span className="ml-4">{ele}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : insideScreenElement === "chatView" ? (
+              <div className="w-full h-full">
+                <div className="flex h-[calc(10%)] w-1/2 items-center border p-4">
+                  <span className="h-3 w-3 bg-[#3CFF31] border rounded-lg"></span>
+                  <span className="text-xl font-semibold ml-4">
+                    {lastClickOnUser}
+                  </span>
+                </div>
+                <div className="flex flex-col h-[calc(90%)] border">
+                  <div className="flex flex-col h-[30rem] py-8 px-4 overflow-y-auto">
+                    {messages.hasOwnProperty(`chat-${lastClickOnUser}-${id}`) &&
+                      messages[`chat-${lastClickOnUser}-${id}`].map(
+                        (val, ind) => {
+                          if (val.isLeftSide)
+                            return (
+                              <div className="flex w-full my-4">
+                                {lastClickOnUser}
+                                <span className="w-5/6 py-2 px-4 bg-[#C6FFBB]  rounded-r-xl">
+                                  {val.msg}
+                                </span>
+                                {val.timestamp}
+                              </div>
+                            );
+                          else {
+                            return (
+                              <div className="flex w-full justify-end my-4">
+                                you
+                                <span className="w-5/6 py-2 px-4 bg-[#C6FFBB] rounded-l-xl">
+                                  {val.msg}
+                                </span>
+                                {val.timestamp}
+                              </div>
+                            );
+                          }
+                        }
+                      )}
+                  </div>
+                  <div className="flex h-[calc(15%)] border justify-center items-center">
+                    <input
+                      className="w-3/4 border-2 border-[#779C7D] rounded-lg h-1/2 px-2 py-1"
+                      placeholder="Type a message..."
+                      value={newMsg}
+                      onChange={(e) => {
+                        setNewMsg(e.target.value);
+                      }}
+                    ></input>
+                    <button
+                      className=" border-2 border-[#779C7D] rounded-lg  px-2 py-1"
+                      onClick={() => {
+                        console.log(
+                          `${newMsg}`,
+                          `chat-${id}-${lastClickOnUser}`
+                        );
+                        const eventName = `chat-${id}-${lastClickOnUser}`;
+                        const storeName = `chat-${lastClickOnUser}-${id}`;
+                        setMessages((prevMessages) => {
+                          if (prevMessages.hasOwnProperty(storeName)) {
+                            return {
+                              ...prevMessages,
+                              [storeName]: [
+                                ...prevMessages[storeName],
+                                {
+                                  msg: newMsg,
+                                  isLeftSide: false,
+                                  timestamp: Date.now(),
+                                },
+                              ],
+                            };
+                          } else {
+                            return {
+                              ...prevMessages,
+                              [storeName]: [
+                                {
+                                  msg: newMsg,
+                                  isLeftSide: false,
+                                  timestamp: Date.now(),
+                                },
+                              ],
+                            };
+                          }
+                        });
+                        console.log("messages", messages);
+                        socket.emit(eventName, newMsg);
+                        setNewMsg("");
+                      }}
+                    >
+                      send
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : insideScreenElement == "makeRequestView" ? (
+              <div className="h-1/2 w-1/3 border flex flex-col items-center z-10">
+                <span className="text-lg font-semibold my-2">Make Request</span>
+
+                <div className="h-16 w-full flex justify-around items-center border">
+                  <button
+                    className="h-full text-[#FF0000]"
+                    onClick={() => {
+                      setInsideScreenElement("");
+                    }}
+                  >
+                    <RxCrossCircled />
+                  </button>
+                  <div className="flex flex-col justify-center items-center">
+                    <span>{lastClickOnUser}</span>
+                  </div>
+                  <button
+                    className="text-[#3CFF31]"
+                    onClick={() => {
+                      handleMakeRequest(lastClickOnUser);
+                    }}
+                  >
+                    <IoIosCheckmarkCircleOutline />
                   </button>
                 </div>
               </div>
-            </div>
-          ) : insideScreenElement == "makeRequestView" ? (
-            <div className="h-1/2 w-1/3 border flex flex-col items-center z-10">
-              <span className="text-lg font-semibold my-2">Make Request</span>
-
-              <div className="h-16 w-full flex justify-around items-center border">
-                <button
-                  className="h-full text-[#FF0000]"
-                  onClick={() => {
-                    setInsideScreenElement("");
-                  }}
-                >
-                  <RxCrossCircled />
-                </button>
-                <div className="flex flex-col justify-center items-center">
-                  <span>{lastClickOnUser}</span>
-                </div>
-                <button
-                  className="text-[#3CFF31]"
-                  onClick={() => {
-                    handleMakeRequest(lastClickOnUser);
-                  }}
-                >
-                  <IoIosCheckmarkCircleOutline />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>khali</div>
-          )}
+            ) : (
+              <div></div>
+            )}
+          </div>
         </div>
       </div>
     </div>
