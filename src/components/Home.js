@@ -28,6 +28,21 @@ const Home = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const handleAuthenticateUser = async () => {
+    await axios
+      .get(`http://localhost:8000/auth/getUser/${id}`, {
+        headers: {
+          "auth-token": localStorage.getItem("authToken"),
+        },
+      })
+      .then((res) => {
+        console.log("huisdchjbeschjbesd", res.data.getUserResult);
+      })
+      .catch((err) => {
+        console.log(err.response);
+        navigate(`/login`);
+      });
+  };
   const handleGetAllUsers = async (latestSearchString) => {
     await axios
       .get(`http://localhost:8000/auth/getUsers/${latestSearchString}`)
@@ -187,6 +202,7 @@ const Home = () => {
   }, [timer]);
 
   useEffect(() => {
+    handleAuthenticateUser();
     handleGetAllUsers(document.getElementById("searchUsersInputElement").value);
     handleGetActiveUsers();
     handlePendingRequests();
