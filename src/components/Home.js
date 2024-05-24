@@ -3,10 +3,8 @@ import { IoSearch } from "react-icons/io5";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import io from "socket.io-client";
-import { FaUser } from "react-icons/fa";
 import { IoIosNotifications } from "react-icons/io";
 import { FaUserFriends } from "react-icons/fa";
-import { MdOutlinePeopleAlt } from "react-icons/md";
 import { MdPersonAddAlt1 } from "react-icons/md";
 import { FaPowerOff } from "react-icons/fa6";
 import { RxCrossCircled } from "react-icons/rx";
@@ -34,8 +32,13 @@ const Home = () => {
   const [isModalMsgPositive, setIsModalMsgPositive] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
+  const session_end_time = localStorage.getItem("session_end_time");
 
   const handleAuthenticateUser = async () => {
+    const timeNow = Date.now();
+    if (timeNow - session_end_time > 900) {
+      localStorage.removeItem("authToken");
+    }
     await axios
       .get(`http://localhost:8000/auth/getUser/${id}`, {
         headers: {
@@ -212,6 +215,7 @@ const Home = () => {
     handleGetActiveUsers();
     handlePendingRequests();
     handleGetUserDetails();
+    handleAuthenticateUser();
 
     socket.on("connect", () => {
       console.log("Connected to server");

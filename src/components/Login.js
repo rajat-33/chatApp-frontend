@@ -17,6 +17,7 @@ const Login = () => {
       .then((res) => {
         console.log(res.data);
         localStorage.setItem("authToken", res.data.auth_token);
+        localStorage.setItem("session_end_time", res.data.session_end_time);
         navigate(`/chat/${userName}`);
       })
       .catch((err) => {
