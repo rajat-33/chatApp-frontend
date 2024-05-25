@@ -168,6 +168,7 @@ const Home = () => {
         setModalMsg("Request Accepted!");
         setIsModalOpen(true);
         setIsModalMsgPositive(true);
+        setInsideScreenElement("chatView");
       })
       .catch((err) => {
         console.log(err);
@@ -196,9 +197,10 @@ const Home = () => {
       .patch(`http://localhost:8000/auth/deleteFriend/${userName}/${id}`)
       .then(() => {
         setTimer(timer + 1);
+        setInsideScreenElement("makeRequestView");
       })
       .catch((err) => {
-        console.log(err.response.data.msg);
+        console.log(err);
         setModalMsg("Can't Remove Friend!");
         setIsModalOpen(true);
         setIsModalMsgPositive(false);
