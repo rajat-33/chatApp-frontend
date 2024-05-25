@@ -32,11 +32,14 @@ const Home = () => {
   const [isModalMsgPositive, setIsModalMsgPositive] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
-  const session_end_time = localStorage.getItem("session_end_time");
 
   const handleAuthenticateUser = async () => {
+    const session_end_time = localStorage.getItem("session_end_time");
     const timeNow = Date.now();
-    if (timeNow - session_end_time > 900) {
+    if (timeNow - session_end_time > 900000) {
+      console.log(session_end_time);
+      console.log(timeNow);
+      console.log(timeNow - session_end_time);
       localStorage.removeItem("authToken");
     }
     await axios
@@ -52,11 +55,12 @@ const Home = () => {
       });
   };
   const handleGetAllUsers = async (latestSearchString) => {
+    console.log(latestSearchString);
     await axios
       .get(`http://localhost:8000/auth/getUsers/${latestSearchString}`)
       .then((res) => {
-        // console.log(res);
-        setAllUsers(res.data.getUserResult);
+        console.log("sdfjbdshjvsg", res.data.getUserResult);
+        setAllUsers(res.data.getUserResult || []);
       })
       .catch((err) => {
         console.log(err.response.data.msg);
@@ -81,9 +85,13 @@ const Home = () => {
 
   const handleGetUserDetails = async () => {
     await axios
-      .get(`http://localhost:8000/auth/getUsers/${id}`)
+      .get(`http://localhost:8000/auth/getUser/${id}`, {
+        headers: {
+          "auth-token": localStorage.getItem("authToken"),
+        },
+      })
       .then((res) => {
-        // console.log("here", res.data.getUserResult.connections);
+        console.log("here ", res.data.getUserResult.connections);
         setConnections(res.data.getUserResult.connections);
       })
       .catch((err) => {
