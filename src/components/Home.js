@@ -14,10 +14,12 @@ import Modal from "./Modal";
 import { FaMessage } from "react-icons/fa6";
 import { IoSendSharp } from "react-icons/io5";
 import { IoPersonRemove } from "react-icons/io5";
+import bcrypt from "bcryptjs-react";
 
 let setMsgToggle = 1;
 const socket = io("http://localhost:8000"); // Use your backend server URL
 const Home = () => {
+  console.log("re-render.......");
   const [allUsers, setAllUsers] = useState([]);
   const [activeUsers, setActiveUsers] = useState(0);
   const [timer, setTimer] = useState(0);
@@ -134,6 +136,7 @@ const Home = () => {
         setModalMsg("Request Sent!");
         setIsModalOpen(true);
         setIsModalMsgPositive(true);
+        setInsideScreenElement("");
       })
       .catch((err) => {
         console.log(err.response.data.message);
@@ -168,7 +171,8 @@ const Home = () => {
         setModalMsg("Request Accepted!");
         setIsModalOpen(true);
         setIsModalMsgPositive(true);
-        setInsideScreenElement("chatView");
+        setInsideScreenElement("");
+        setTimer(timer + 1);
       })
       .catch((err) => {
         console.log(err);
@@ -196,8 +200,11 @@ const Home = () => {
     await axios
       .patch(`http://localhost:8000/auth/deleteFriend/${userName}/${id}`)
       .then(() => {
+        setModalMsg("Friend Removed");
+        setIsModalOpen(true);
+        setIsModalMsgPositive(true);
+        setInsideScreenElement("");
         setTimer(timer + 1);
-        setInsideScreenElement("makeRequestView");
       })
       .catch((err) => {
         console.log(err);
@@ -215,6 +222,40 @@ const Home = () => {
     if (hours < 10) timeHere = "0" + hours + ":" + minutes + " AM";
     if (hours > 12) timeHere = (hours % 12) + ":" + minutes + " PM";
     return timeHere;
+  };
+
+  const handleSendMessage = () => {
+    const eventName = `chat-${id}-${lastClickOnUser}`;
+    const storeName = `chat-${lastClickOnUser}-${id}`;
+    setMessages((prevMessages) => {
+      if (prevMessages.hasOwnProperty(storeName)) {
+        return {
+          ...prevMessages,
+          [storeName]: [
+            ...prevMessages[storeName],
+            {
+              msg: newMsg,
+              isLeftSide: false,
+              timestamp: getMessageTimestamp(),
+            },
+          ],
+        };
+      } else {
+        return {
+          ...prevMessages,
+          [storeName]: [
+            {
+              msg: newMsg,
+              isLeftSide: false,
+              timestamp: getMessageTimestamp(),
+            },
+          ],
+        };
+      }
+    });
+    console.log("messages", messages);
+    socket.emit(eventName, newMsg);
+    setNewMsg("");
   };
 
   useEffect(() => {
@@ -271,9 +312,14 @@ const Home = () => {
       // console.log(setMsgToggle);
       setMsgToggle = (setMsgToggle + 1) % 2;
     });
-  }, [timer]);
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [socket]);
 
   useEffect(() => {
+    console.log("\ttime Run");
     handleAuthenticateUser();
     handleGetAllUsers(document.getElementById("searchUsersInputElement").value);
     handleGetActiveUsers();
@@ -285,11 +331,9 @@ const Home = () => {
     }, 10000);
 
     return () => {
-      // socket.off("message");
-      socket.disconnect();
       clearInterval();
     };
-  }, []);
+  }, [timer]);
 
   return (
     <div className="h-full w-full">
@@ -307,9 +351,10 @@ const Home = () => {
             : "h-full w-full flex flex-col"
         }
       >
-        <div className="flex h-[calc(10%)] justify-end items-center border-y-[0.2rem] border-[#C6FFBB]">
-          <div className="flex h-full w-3/4 justify-end items-center">
-            <div className="w-3/5 text-center text-[2rem] font-semibold">
+        <div className="w-full flex h-[calc(10%)] justify-end items-center border-y-[0.2rem] border-[#C6FFBB]">
+          <div className="w-1/4 h-full bg-[#11231E] flex">f</div>
+          <div className="flex h-full w-3/4 justify-end items-center border">
+            <div className="w-3/5 text-center text-[2rem] font-semibold text-[#11231E]">
               &lt; ChatApp /&gt;
             </div>
             <div className="w-2/5 flex justify-around">
@@ -441,9 +486,9 @@ const Home = () => {
               </div>
             </div>
           </div>
-          <div className="h-full w-5/6 border-2 flex justify-end ">
+          <div className="h-full w-5/6 border-2 flex justify-end bg-[#11231E] text-white">
             {insideScreenElement === "viewNotifications" ? (
-              <div className="h-1/2 w-1/3 flex flex-col items-center z-10">
+              <div className="h-1/4 w-1/3 flex flex-col items-center z-10 border border-white">
                 <div className="flex w-full justify-center items-center">
                   <span className="text-lg font-semibold my-2 w-full text-center">
                     Pending Requests
@@ -459,36 +504,38 @@ const Home = () => {
                     </span>
                   </button>
                 </div>
-                {pendingRequests.map((ele, ind) => {
-                  return (
-                    <div className="h-16 w-full flex justify-around items-center border">
-                      <button
-                        className="h-full text-[#FF0000]"
-                        onClick={() => {
-                          handleDeleteRequest(ele.sender);
-                        }}
-                      >
-                        <RxCrossCircled />
-                      </button>
-                      <div className="flex flex-col justify-center items-center">
-                        <span>{ele.timestamp}</span>
-                        <span>{ele.sender}</span>
+                <div className="overflow-y-auto w-full">
+                  {pendingRequests.map((ele, ind) => {
+                    return (
+                      <div className="h-16 w-full flex justify-around items-center border">
+                        <button
+                          className="h-full text-[#FF0000]"
+                          onClick={() => {
+                            handleDeleteRequest(ele.sender);
+                          }}
+                        >
+                          <RxCrossCircled />
+                        </button>
+                        <div className="flex flex-col justify-center items-center">
+                          <span>{ele.timestamp}</span>
+                          <span>{ele.sender}</span>
+                        </div>
+                        <button
+                          className="text-[#3CFF31]"
+                          onClick={() => {
+                            handleAcceptRequest(ele.sender);
+                          }}
+                        >
+                          <IoIosCheckmarkCircleOutline />
+                        </button>
                       </div>
-                      <button
-                        className="text-[#3CFF31]"
-                        onClick={() => {
-                          handleAcceptRequest(ele.sender);
-                        }}
-                      >
-                        <IoIosCheckmarkCircleOutline />
-                      </button>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             ) : insideScreenElement === "viewFriends" ? (
-              <div className="h-1/2 w-1/4 border flex flex-col items-center z-10">
-                <div className="flex w-full justify-center items-center">
+              <div className="h-1/4 w-1/6 border flex flex-col items-center z-10 border border-white px-4">
+                <div className="flex w-full justify-around items-center">
                   <span className="text-lg font-semibold my-2 w-full text-center">
                     Friends
                   </span>
@@ -503,10 +550,10 @@ const Home = () => {
                     </span>
                   </button>
                 </div>
-                <div className="w-full flex flex-col">
+                <div className="w-full flex flex-col overflow-y-auto">
                   {connections.map((ele, ind) => {
                     return (
-                      <div className="w-1/2 flex justify-center items-center">
+                      <div className="w-1/2 flex items-center">
                         <span className="h-3 w-3 text-[#2B2FFF]">
                           <FaUserFriends />
                         </span>
@@ -517,11 +564,11 @@ const Home = () => {
                 </div>
               </div>
             ) : insideScreenElement === "chatView" ? (
-              <div className="w-full h-full flex flex-col">
+              <div className="w-full h-full flex flex-col bg-[#11231E]">
                 <div className="flex items-center">
                   <div className="flex h-[calc(10%)] w-1/2 items-center p-4">
                     <span className="h-3 w-3 bg-[#3CFF31] border rounded-lg"></span>
-                    <span className="text-xl font-semibold ml-4">
+                    <span className="text-xl font-semibold ml-4 text-white">
                       {lastClickOnUser}
                     </span>
                   </div>
@@ -530,6 +577,7 @@ const Home = () => {
                     onClick={() => {
                       handleRemoveFriend(lastClickOnUser);
                     }}
+                    title="Remove friend"
                   >
                     <span className="text-xl font-semibold ml-4 border p-2 rounded-[5rem] bg-[#FF0000]">
                       <IoPersonRemove />
@@ -538,7 +586,7 @@ const Home = () => {
                 </div>
 
                 <div className="flex flex-col h-[calc(90%)] border">
-                  <div className="flex flex-col h-[30rem] py-8 px-4 overflow-y-auto">
+                  <div className="flex flex-col h-[30rem] py-8 px-4 overflow-y-auto text-black">
                     {messages.hasOwnProperty(`chat-${lastClickOnUser}-${id}`) &&
                       messages[`chat-${lastClickOnUser}-${id}`].map(
                         (val, ind) => {
@@ -568,9 +616,9 @@ const Home = () => {
                         }
                       )}
                   </div>
-                  <div className="flex h-[calc(15%)] border justify-center items-center">
+                  <div className="flex h-[calc(15%)] justify-center items-center">
                     <input
-                      className="w-3/4 border-2 border-[#779C7D] rounded-lg h-1/2 px-2 "
+                      className="w-3/4 border-2 border-[#779C7D] rounded-lg h-1/2 px-2 bg-[#11231E] text-white"
                       placeholder="Type a message..."
                       value={newMsg}
                       onChange={(e) => {
@@ -578,82 +626,14 @@ const Home = () => {
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                          console.log(
-                            `${newMsg}`,
-                            `chat-${id}-${lastClickOnUser}`
-                          );
-                          const eventName = `chat-${id}-${lastClickOnUser}`;
-                          const storeName = `chat-${lastClickOnUser}-${id}`;
-                          setMessages((prevMessages) => {
-                            if (prevMessages.hasOwnProperty(storeName)) {
-                              return {
-                                ...prevMessages,
-                                [storeName]: [
-                                  ...prevMessages[storeName],
-                                  {
-                                    msg: newMsg,
-                                    isLeftSide: false,
-                                    timestamp: getMessageTimestamp(),
-                                  },
-                                ],
-                              };
-                            } else {
-                              return {
-                                ...prevMessages,
-                                [storeName]: [
-                                  {
-                                    msg: newMsg,
-                                    isLeftSide: false,
-                                    timestamp: getMessageTimestamp(),
-                                  },
-                                ],
-                              };
-                            }
-                          });
-                          console.log("messages", messages);
-                          socket.emit(eventName, newMsg);
-                          setNewMsg("");
+                          handleSendMessage();
                         }
                       }}
                     ></input>
                     <button
                       className="text-[#779C7D] rounded-lg  px-2 py-1"
                       onClick={() => {
-                        console.log(
-                          `${newMsg}`,
-                          `chat-${id}-${lastClickOnUser}`
-                        );
-                        const eventName = `chat-${id}-${lastClickOnUser}`;
-                        const storeName = `chat-${lastClickOnUser}-${id}`;
-                        setMessages((prevMessages) => {
-                          if (prevMessages.hasOwnProperty(storeName)) {
-                            return {
-                              ...prevMessages,
-                              [storeName]: [
-                                ...prevMessages[storeName],
-                                {
-                                  msg: newMsg,
-                                  isLeftSide: false,
-                                  timestamp: getMessageTimestamp(),
-                                },
-                              ],
-                            };
-                          } else {
-                            return {
-                              ...prevMessages,
-                              [storeName]: [
-                                {
-                                  msg: newMsg,
-                                  isLeftSide: false,
-                                  timestamp: getMessageTimestamp(),
-                                },
-                              ],
-                            };
-                          }
-                        });
-                        console.log("messages", messages);
-                        socket.emit(eventName, newMsg);
-                        setNewMsg("");
+                        handleSendMessage();
                       }}
                     >
                       <IoSendSharp />
@@ -662,9 +642,8 @@ const Home = () => {
                 </div>
               </div>
             ) : insideScreenElement == "makeRequestView" ? (
-              <div className="h-1/2 w-1/3 border flex flex-col items-center z-10">
+              <div className="h-fit w-1/3 border flex flex-col items-center z-10 border border-white">
                 <span className="text-lg font-semibold my-2">Make Request</span>
-
                 <div className="h-16 w-full flex justify-around items-center border">
                   <button
                     className="h-full text-[#FF0000]"
