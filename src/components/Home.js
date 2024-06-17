@@ -16,10 +16,8 @@ import { IoSendSharp } from "react-icons/io5";
 import { IoPersonRemove } from "react-icons/io5";
 import bcrypt from "bcryptjs-react";
 
-let setMsgToggle = 1;
 const socket = io("http://localhost:8000"); // Use your backend server URL
 const Home = () => {
-  console.log("re-render.......");
   const [allUsers, setAllUsers] = useState([]);
   const [activeUsers, setActiveUsers] = useState(0);
   const [timer, setTimer] = useState(0);
@@ -273,11 +271,7 @@ const Home = () => {
     });
 
     socket.onAny((eventName, ...args) => {
-      if (
-        eventName.endsWith(id) &&
-        eventName.startsWith("chat") &&
-        setMsgToggle
-      ) {
+      if (eventName.endsWith(id) && eventName.startsWith("chat")) {
         console.log(`Received event '${eventName}' ${args[0]}`);
         console.log(args[0]);
         console.log(messages);
@@ -309,14 +303,12 @@ const Home = () => {
         });
         console.log("messages", messages);
       }
-      // console.log(setMsgToggle);
-      setMsgToggle = (setMsgToggle + 1) % 2;
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [socket]);
+  }, []);
 
   useEffect(() => {
     console.log("\ttime Run");
